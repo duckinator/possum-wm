@@ -51,7 +51,7 @@ class PossumWM:
     def grab_keys(self):
         self._grab_key('Tab', X.Mod1Mask)
         self._grab_key('Alt_L', X.NONE)
-        #self._grab_key('Left', X.Mod1Mask)
+        self._grab_key('Left', X.Mod1Mask)
         self._grab_key('Right', X.Mod1Mask)
 
     def _grab_key(self, key, modifiers):
