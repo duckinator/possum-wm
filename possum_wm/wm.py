@@ -11,6 +11,10 @@ class PossumWM:
     def start(self):
         # Display name is inferred from $DISPLAY environment variable.
         self.display = Xlib.display.Display()
+        if self.display is None:
+            print("Couldn't open display!")
+            exit(1)
+
         self.screen = self.display.get_default_screen()
         self.root = self.display.screen().root
 
