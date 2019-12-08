@@ -7,6 +7,8 @@ import time
 
 # QUESTIONABLE ASSUMPTIONS:
 # - only the first screen is used/cared about.
+# - you won't press <key> then alt for an alt+<key> shortcut.
+#   (this usually results in weird things anyway?)
 class PossumWM:
     def start(self):
         # Display name is inferred from $DISPLAY environment variable.
@@ -22,6 +24,12 @@ class PossumWM:
         #self.root.change_attributes(event_mask=X.KeyPressMask)
         self.grab_keys()
 
+        self.alt_l_keycode = self.display.keysym_to_keycode(
+            XK.string_to_keysym('Alt_L')
+        )
+
+        self.alt_l_pressed_last = False
+
     def stop(self):
         self.display.close()
         self.display = None
@@ -33,9 +41,10 @@ class PossumWM:
         ]
 
     def grab_keys(self):
-        # FIXME: WHY THE FUCK IS THIS NOT WORKING
         self._grab_key('Tab', X.Mod1Mask)
-        self._grab_key('a', X.ControlMask)
+        self._grab_key('Alt_L', X.NONE)
+        #self._grab_key('Left', X.Mod1Mask)
+        self._grab_key('Right', X.Mod1Mask)
 
     def _grab_key(self, key, modifiers):
         # Possible options for modifiers:
@@ -59,9 +68,30 @@ class PossumWM:
         self.root.grab_key(keycode, modifiers, True,
                            X.GrabModeAsync, X.GrabModeAsync)
 
+    def handle_keypress(self, event):
+        print("[PossumWM.handle_keypress]", event)
+        keycode = event.detail
+
+        if keycode == self.alt_l_keycode:
+            self.alt_l_pressed_last = True
+        else:
+            self.alt_l_pressed_last = False
+
+    def handle_keyrelease(self, event):
+        print("[PossumWM.handle_keyrelease]", event)
+        keycode = event.detail
+
+        if keycode == self.alt_l_keycode and self.alt_l_pressed_last:
+            print("~~~ Alt_L was pressed on its own.")
+        self.alt_l_pressed_last = False
+
     def handle(self, event):
-        print("[PossumWM.handle] Got event!")
-        print("  ", event)
+        if isinstance(event, Xlib.protocol.event.KeyPress):
+            self.handle_keypress(event)
+        elif isinstance(event, Xlib.protocol.event.KeyRelease):
+            self.handle_keyrelease(event)
+        else:
+            print("[PossumWM.handle] Got unhandled event!")
 
     def loop(self):
         while True:
