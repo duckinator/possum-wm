@@ -24,15 +24,23 @@ class PossumWM:
         #self.root.change_attributes(event_mask=X.KeyPressMask)
         self.grab_keys()
 
-        self.alt_l_keycode = self.display.keysym_to_keycode(
-            XK.string_to_keysym('Alt_L')
-        )
+        self.alt_l_keycode = self.keycode('Alt_L')
+        self.alt_r_keycode = self.keycode('Alt_R')
+        self.tab_keycode = self.keycode('Tab')
+        self.left_keycode = self.keycode('Left')
+        self.right_keycode = self.keycode('Right')
 
+        self.alt_pressed = False
         self.alt_l_pressed_last = False
 
     def stop(self):
         self.display.close()
         self.display = None
+
+    def keycode(self, keyname):
+        return self.display.keysym_to_keycode(
+            XK.string_to_keysym(keyname)
+        )
 
     def info(self):
         g = self.root.get_geometry()
@@ -63,14 +71,16 @@ class PossumWM:
 
         keysym = XK.string_to_keysym(key)
         keycode = self.display.keysym_to_keycode(keysym)
-        print("keycode = ", keycode)
 
         self.root.grab_key(keycode, modifiers, True,
                            X.GrabModeAsync, X.GrabModeAsync)
 
     def handle_keypress(self, event):
-        print("[PossumWM.handle_keypress]", event)
+        #print("[PossumWM.handle_keypress]", event)
         keycode = event.detail
+
+        if keycode == self.alt_l_keycode or keycode == self.alt_r_keycode:
+            self.alt_pressed = True
 
         if keycode == self.alt_l_keycode:
             self.alt_l_pressed_last = True
@@ -78,12 +88,21 @@ class PossumWM:
             self.alt_l_pressed_last = False
 
     def handle_keyrelease(self, event):
-        print("[PossumWM.handle_keyrelease]", event)
+        #print("[PossumWM.handle_keyrelease]", event)
         keycode = event.detail
+
+        if self.alt_pressed:
+            if keycode == self.left_keycode:
+                self.root.circulate(X.LowerHighest)
+            elif keycode == self.right_keycode:
+                self.root.circulate(X.RaiseLowest)
 
         if keycode == self.alt_l_keycode and self.alt_l_pressed_last:
             print("~~~ Alt_L was pressed on its own.")
         self.alt_l_pressed_last = False
+
+        if keycode == self.alt_l_keycode or keycode == self.alt_r_keycode:
+            self.alt_pressed = False
 
     def handle(self, event):
         if isinstance(event, Xlib.protocol.event.KeyPress):
