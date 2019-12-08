@@ -1,0 +1,5 @@
+status = [
+  "Lint",
+#  "Linux container:python:3.6-slim",
+#  "Linux container:python:3.7-slim",
+]
